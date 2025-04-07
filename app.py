@@ -17,7 +17,8 @@ class Article(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return '<Article %r>' % self.id
+        return "<Article %r>" % self.id
+
 
 @app.route("/")
 @app.route("/home")
@@ -29,23 +30,35 @@ def index():
 def about():
     return render_template("about.html")
 
-@app.route("/create-article", methods=['POST', 'GET'])
+
+@app.route("/posts")
+def posts():
+    articles = Article.query.order_by(Article.date.desc()).all()
+    return render_template("posts.html", articles=articles)
+
+@app.route("/posts/<int:id>")
+def post_detail(id):
+    article = Article.query.get(id)
+    return render_template("post_detail.html", article=article)
+
+@app.route("/create-article", methods=["POST", "GET"])
 def create_artile():
-    if request.method == 'POST':
-        title = request.form['title']
-        intro = request.form['intro']
-        text = request.form['text']
+    if request.method == "POST":
+        title = request.form["title"]
+        intro = request.form["intro"]
+        text = request.form["text"]
         article = Article(title=title, intro=intro, text=text)
         try:
             db.session.add(article)
             db.session.commit()
-            return redirect('/')
+            return redirect("/posts")
         except:
-            return 'При добавление статьи произошла ошибка'
+            return "При добавление статьи произошла ошибка"
     else:
-        pass
-    return render_template("create-article.html")
+        return render_template("create-article.html")
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
